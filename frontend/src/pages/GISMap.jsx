@@ -19,6 +19,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "../context/AuthContext";
 import { listProjectDatasets } from "../api/datasets";
 import { getDatasetFeatures } from "../api/gis";
@@ -32,6 +33,7 @@ function MapFlyController({ center, zoom }) {
 }
 
 function GISMap() {
+  const { t } = useTranslation();
   const { selectedProjectId } = useAuth();
   const [baseMap, setBaseMap] = useState("satellite");
   const [datasets, setDatasets] = useState([]);
@@ -133,24 +135,28 @@ function GISMap() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-2 border-b border-slate-200">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold text-slate-900 tracking-tight">GIS Map Viewer</h1>
+            <h1 className="text-xl font-bold text-slate-900 tracking-tight">
+              {t("map.title", "GIS Map Viewer")}
+            </h1>
             {loading && <Loader2 className="h-4 w-4 animate-spin text-emerald-600" />}
           </div>
           <p className="text-xs text-slate-500 font-normal mt-0.5">
-            Interactive spatial viewer displaying live PostGIS layers.
+            {t("map.subtitle", "Interactive spatial viewer displaying live PostGIS layers.")}
           </p>
         </div>
 
         {/* Dataset selector */}
         <div className="flex items-center gap-2">
-          <label className="text-xs font-semibold text-slate-600">Active Layer:</label>
+          <label className="text-xs font-semibold text-slate-600">
+            {t("map.activeLayer", "Active Layer:")}
+          </label>
           <select
             value={selectedDatasetId}
             onChange={(e) => handleDatasetChange(e.target.value)}
-            className="bg-white border border-slate-200 rounded px-2.5 py-1 text-xs font-medium text-slate-800 focus:outline-none"
+            className="bg-white border border-slate-200 rounded px-2.5 py-1 text-xs font-medium text-slate-800 focus:outline-none cursor-pointer"
           >
             {datasets.length === 0 ? (
-              <option value="">No Datasets Uploaded</option>
+              <option value="">{t("map.noDatasets", "No Datasets Uploaded")}</option>
             ) : (
               datasets.map((ds) => (
                 <option key={ds.id} value={ds.id}>
@@ -177,21 +183,21 @@ function GISMap() {
           <div className="absolute top-3 right-3 z-20 bg-white/95 p-1 rounded-md border border-slate-200 shadow text-xs flex items-center gap-1">
             <button
               onClick={() => setBaseMap("satellite")}
-              className={`px-2 py-0.5 rounded text-[11px] font-medium ${baseMap === "satellite" ? "bg-[#166534] text-white" : "text-slate-600 hover:bg-slate-100"}`}
+              className={`px-2 py-0.5 rounded text-[11px] font-medium cursor-pointer ${baseMap === "satellite" ? "bg-[#166534] text-white" : "text-slate-600 hover:bg-slate-100"}`}
             >
-              Satellite
+              {t("map.satellite", "Satellite")}
             </button>
             <button
               onClick={() => setBaseMap("positron")}
-              className={`px-2 py-0.5 rounded text-[11px] font-medium ${baseMap === "positron" ? "bg-[#166534] text-white" : "text-slate-600 hover:bg-slate-100"}`}
+              className={`px-2 py-0.5 rounded text-[11px] font-medium cursor-pointer ${baseMap === "positron" ? "bg-[#166534] text-white" : "text-slate-600 hover:bg-slate-100"}`}
             >
-              Light
+              {t("map.positron", "Light")}
             </button>
             <button
               onClick={() => setBaseMap("osm")}
-              className={`px-2 py-0.5 rounded text-[11px] font-medium ${baseMap === "osm" ? "bg-[#166534] text-white" : "text-slate-600 hover:bg-slate-100"}`}
+              className={`px-2 py-0.5 rounded text-[11px] font-medium cursor-pointer ${baseMap === "osm" ? "bg-[#166534] text-white" : "text-slate-600 hover:bg-slate-100"}`}
             >
-              OSM
+              {t("map.osm", "OSM")}
             </button>
           </div>
         </div>
@@ -202,10 +208,14 @@ function GISMap() {
             <div className="space-y-3">
               <div className="flex items-start justify-between pb-2 border-b border-slate-100">
                 <div>
-                  <h3 className="font-bold text-slate-900 text-sm">Feature ID: {selectedFeature.id || "N/A"}</h3>
-                  <span className="text-[11px] text-slate-500 font-mono">Code: {selectedFeature.properties?.feature_code || selectedFeature.properties?.khasra_no || "N/A"}</span>
+                  <h3 className="font-bold text-slate-900 text-sm">
+                    {t("map.featureId", "Feature ID:")} {selectedFeature.id || "N/A"}
+                  </h3>
+                  <span className="text-[11px] text-slate-500 font-mono">
+                    {t("map.featureCode", "Code:")} {selectedFeature.properties?.feature_code || selectedFeature.properties?.khasra_no || "N/A"}
+                  </span>
                 </div>
-                <button onClick={() => setSelectedFeature(null)} className="text-slate-400 hover:text-slate-600">
+                <button onClick={() => setSelectedFeature(null)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
                   <X size={16} />
                 </button>
               </div>
@@ -223,7 +233,7 @@ function GISMap() {
           </div>
         ) : (
           <div className="hidden lg:flex w-64 h-full bg-slate-50 border-l border-slate-200 p-4 flex-col justify-center text-center text-xs text-slate-400">
-            Click any polygon on the map to inspect PostGIS attributes.
+            {t("map.clickPrompt", "Click any polygon on the map to inspect PostGIS attributes.")}
           </div>
         )}
       </div>

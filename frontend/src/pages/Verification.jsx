@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import {
   CheckCircle2,
   AlertTriangle,
@@ -16,6 +17,7 @@ import { useAuth } from "../context/AuthContext";
 import { getPendingMatches, reviewMatch, runMatching } from "../api/matching";
 
 function Verification() {
+  const { t } = useTranslation();
   const { selectedProjectId, projects } = useAuth();
   const [pendingMatches, setPendingMatches] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -100,11 +102,11 @@ function Verification() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-2 border-b border-slate-200">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold text-slate-900 tracking-tight">Human-in-the-Loop Review Queue</h1>
+            <h1 className="text-xl font-bold text-slate-900 tracking-tight">{t("review.title")}</h1>
             {loading && <Loader2 className="h-4 w-4 animate-spin text-emerald-600" />}
           </div>
           <p className="text-xs text-slate-500 font-normal mt-0.5">
-            Adjudicate AI-suggested feature matches, review spatial confidence, and ratify titles.
+            {t("review.subtitle")}
           </p>
         </div>
 
@@ -115,7 +117,7 @@ function Verification() {
             className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#166534] hover:bg-emerald-900 text-white rounded-md text-xs font-semibold cursor-pointer disabled:opacity-50"
           >
             {matchingRunning ? <Loader2 size={13} className="animate-spin" /> : <Cpu size={13} />}
-            Run AI Matching
+            {t("dashboard.aiMatching", "Run AI Matching")}
           </button>
           <button onClick={() => selectedProjectId && loadPendingMatches(selectedProjectId)} className="p-1.5 bg-white border border-slate-200 rounded text-slate-600">
             <RefreshCw size={13} />
@@ -141,10 +143,10 @@ function Verification() {
       <div className="space-y-3">
         {filteredMatches.length === 0 ? (
           <div className="p-8 text-center bg-white rounded-lg border border-slate-200 text-slate-400 text-xs">
-            No pending AI feature matches to review for this project.
+            {t("review.noItems")}
             <div className="mt-2">
               <button onClick={handleTriggerMatching} className="text-emerald-700 font-semibold hover:underline">
-                Run AI Feature Matching Engine
+                {t("dashboard.aiMatching", "Run AI Matching")}
               </button>
             </div>
           </div>
@@ -207,13 +209,13 @@ function Verification() {
                     onClick={() => handleReview(match.id, "rejected")}
                     className="px-3 py-1.5 bg-white hover:bg-red-50 text-red-700 border border-red-200 rounded text-xs font-semibold"
                   >
-                    Reject Match
+                    {t("review.reject", "Reject")}
                   </button>
                   <button
                     onClick={() => handleReview(match.id, "approved")}
                     className="inline-flex items-center gap-1 px-3 py-1.5 bg-[#166534] hover:bg-emerald-900 text-white rounded text-xs font-semibold"
                   >
-                    <Check size={13} /> Approve Match
+                    <Check size={13} /> {t("review.approve", "Approve")}
                   </button>
                 </div>
               </div>

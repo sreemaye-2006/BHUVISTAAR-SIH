@@ -25,9 +25,6 @@ export const uploadDatasetFile = async (datasetId, file, onUploadProgress) => {
   formData.append('file', file);
 
   const response = await apiClient.post(`/datasets/${datasetId}/upload`, formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
     onUploadProgress: (progressEvent) => {
       if (onUploadProgress && progressEvent.total) {
         const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
@@ -42,3 +39,9 @@ export const getDatasetStatus = async (datasetId) => {
   const response = await apiClient.get(`/datasets/${datasetId}/status`);
   return response.data;
 };
+
+export const inspectDataset = async (datasetId) => {
+  const response = await apiClient.get(`/datasets/${datasetId}/inspect`);
+  return response.data;
+};
+

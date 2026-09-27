@@ -10,19 +10,20 @@ import {
   Database,
   CheckCircle2,
   AlertCircle,
-  Trash2,
-  ArrowRight,
-  RefreshCw,
   Eye,
-  X,
   Loader2,
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "../context/AuthContext";
-import { createDataset, uploadDatasetFile, listProjectDatasets } from "../api/datasets";
+import { createDataset, uploadDatasetFile, inspectDataset } from "../api/datasets";
 import { processVectorDataset, processRaster } from "../api/gis";
+import IngestionPreviewModal from "../components/ingestion/IngestionPreviewModal";
+
+const RASTER_EXTS = ["tif", "tiff", "dem", "img", "jpg", "jpeg", "png"];
+const ALL_SUPPORTED_MIME = ".geojson,.json,.shp,.zip,.kml,.kmz,.gpkg,.gpx,.csv,.xlsx,.xls,.tif,.tiff,.jpg,.jpeg,.png";
 
 function DataIngestion() {
+  const { t } = useTranslation();
   const { selectedProjectId } = useAuth();
   const fileInputRef = useRef(null);
   const [selectedSourceForUpload, setSelectedSourceForUpload] = useState(null);
@@ -31,15 +32,20 @@ function DataIngestion() {
   const [uploadQueue, setUploadQueue] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
 
+  // Inspection modal state
+  const [previewModalOpen, setPreviewModalOpen] = useState(false);
+  const [previewMetadata, setPreviewMetadata] = useState(null);
+  const [previewFileName, setPreviewFileName] = useState("");
+
   const dataSources = [
-    { id: "drone", name: "Drone Survey", description: "Orthophoto, point clouds & aerial building footprints", icon: Upload, formats: "GeoTIFF, SHP, GeoJSON", acceptedMime: ".tif,.tiff,.shp,.geojson,.zip,.kml" },
-    { id: "ori", name: "ORI", description: "High-resolution orthorectified satellite/aerial imagery", icon: Satellite, formats: "GeoTIFF, JPEG, PNG", acceptedMime: ".tif,.tiff,.jpg,.jpeg,.png" },
-    { id: "cadastral", name: "Cadastral", description: "Revenue parcel boundaries and village map sheets", icon: Map, formats: "SHP, GeoJSON, GPKG", acceptedMime: ".shp,.geojson,.gpkg,.zip,.kml,.json" },
-    { id: "municipal", name: "Municipal GIS", description: "Property tax polygons, building IDs & civic attributes", icon: Building2, formats: "SHP, GeoJSON, CSV", acceptedMime: ".shp,.geojson,.csv,.json,.zip" },
-    { id: "revenue", name: "Revenue Records", description: "Ownership register, RoR / Jamabandi & mutation data", icon: FileText, formats: "CSV, XLSX, PDF", acceptedMime: ".csv,.xlsx,.xls,.pdf" },
-    { id: "gnss", name: "GNSS / CORS", description: "High-precision rover survey coordinates & GCP benchmarks", icon: Navigation, formats: "CSV, TXT, GPKG", acceptedMime: ".csv,.txt,.gpkg,.dat" },
-    { id: "ground_truth", name: "Ground Truth", description: "Field survey ground-truthing & physical verification logs", icon: Database, formats: "CSV, GeoJSON", acceptedMime: ".csv,.geojson,.json" },
-    { id: "dsm", name: "DSM / DTM", description: "Digital Surface Model & elevation contours", icon: Mountain, formats: "GeoTIFF, DEM", acceptedMime: ".tif,.tiff,.dem,.img" },
+    { id: "drone", name: t("ingestion.droneSurvey", "Drone Survey"), description: t("ingestion.droneDesc", "Orthophoto, point clouds & aerial building footprints"), icon: Upload, formats: "GeoTIFF, SHP, GeoJSON", acceptedMime: ".tif,.tiff,.shp,.geojson,.zip,.kml" },
+    { id: "ori", name: t("ingestion.ori", "ORI"), description: t("ingestion.oriDesc", "High-resolution orthorectified satellite/aerial imagery"), icon: Satellite, formats: "GeoTIFF, JPEG, PNG", acceptedMime: ".tif,.tiff,.jpg,.jpeg,.png" },
+    { id: "cadastral", name: t("ingestion.cadastral", "Cadastral"), description: t("ingestion.cadastralDesc", "Revenue parcel boundaries and village map sheets"), icon: Map, formats: "SHP, GeoJSON, GPKG, KML", acceptedMime: ".shp,.geojson,.gpkg,.zip,.kml,.kmz,.json" },
+    { id: "municipal", name: t("ingestion.municipal", "Municipal GIS"), description: t("ingestion.municipalDesc", "Property tax polygons, building IDs & civic attributes"), icon: Building2, formats: "SHP, GeoJSON, CSV, GPKG", acceptedMime: ".shp,.geojson,.csv,.json,.zip,.gpkg" },
+    { id: "revenue", name: t("ingestion.revenue", "Revenue Records"), description: t("ingestion.revenueDesc", "Ownership register, RoR / Jamabandi & mutation data"), icon: FileText, formats: "CSV, XLSX, XLS", acceptedMime: ".csv,.xlsx,.xls" },
+    { id: "gnss", name: t("ingestion.gnss", "GNSS / CORS"), description: t("ingestion.gnssDesc", "High-precision rover survey coordinates & GCP benchmarks"), icon: Navigation, formats: "GPX, CSV, GPKG", acceptedMime: ".gpx,.csv,.txt,.gpkg" },
+    { id: "ground_truth", name: t("ingestion.groundTruth", "Ground Truth"), description: t("ingestion.groundTruthDesc", "Field survey ground-truthing & physical verification logs"), icon: Database, formats: "CSV, GeoJSON, GPX", acceptedMime: ".csv,.geojson,.json,.gpx" },
+    { id: "dsm", name: t("ingestion.dsm", "DSM / DTM"), description: t("ingestion.dsmDesc", "Digital Surface Model & elevation contours"), icon: Mountain, formats: "GeoTIFF, TIFF", acceptedMime: ".tif,.tiff" },
   ];
 
   const showToast = (message, type = "success") => {
@@ -58,7 +64,7 @@ function DataIngestion() {
   const handleUploadFiles = async (files, forcedSource = null) => {
     if (!files || files.length === 0) return;
     if (!selectedProjectId) {
-      showToast("Please select or create a project first from the top header.", "error");
+      showToast(t("ingestion.selectProjectFirst", "Please select or create a project first from the top header."), "error");
       return;
     }
 
@@ -67,12 +73,14 @@ function DataIngestion() {
 
     for (const file of fileList) {
       const ext = file.name.split(".").pop().toLowerCase();
-      const sourceType = forcedSource ? forcedSource.id : (["tif", "tiff"].includes(ext) ? "drone" : "cadastral");
-      const datasetType = ["tif", "tiff", "dem", "img"].includes(ext) ? "raster" : "vector";
+      const isRaster = RASTER_EXTS.includes(ext);
+      const sourceType = forcedSource ? forcedSource.id : (isRaster ? "drone" : "cadastral");
+      const datasetType = isRaster ? "raster" : "vector";
 
       const queueId = "temp-" + Date.now();
       const queueItem = {
         id: queueId,
+        datasetId: null,
         name: file.name,
         size: formatFileSize(file.size),
         source: forcedSource ? forcedSource.name : "Uploaded Data",
@@ -103,7 +111,20 @@ function DataIngestion() {
         if (datasetType === "vector") {
           processRes = await processVectorDataset(dataset.id);
         } else {
-          processRes = await processRaster(dataset.id);
+          try {
+            processRes = await processRaster(dataset.id);
+          } catch (rErr) {
+            console.warn("Raster note:", rErr);
+            processRes = { status: "unreferenced" };
+          }
+        }
+
+        // 4. Try inspecting metadata
+        let inspection = null;
+        try {
+          inspection = await inspectDataset(dataset.id);
+        } catch (e) {
+          // Non-blocking inspection attempt
         }
 
         setUploadQueue((prev) =>
@@ -112,23 +133,44 @@ function DataIngestion() {
               ? {
                   ...item,
                   id: dataset.id,
+                  datasetId: dataset.id,
                   status: "Completed",
-                  crs: processRes?.crs || "EPSG:4326",
-                  featuresCount: processRes?.feature_count ? `${processRes.feature_count} features` : "Processed",
+                  crs: inspection?.crs || processRes?.crs || "EPSG:4326",
+                  format: inspection?.format || ext.toUpperCase(),
+                  featuresCount: inspection?.feature_count !== undefined ? `${inspection.feature_count} records` : (processRes?.feature_count ? `${processRes.feature_count} features` : "Processed"),
+                  metadata: inspection,
                 }
               : item
           )
         );
 
-        showToast(`Dataset "${file.name}" uploaded and processed successfully!`);
+        showToast(`"${file.name}" ${t("ingestion.uploadSuccess", "uploaded and processed successfully!")}`);
       } catch (err) {
         setUploadQueue((prev) =>
-          prev.map((item) => (item.id === queueId ? { ...item, status: "Failed", error: err.friendlyMessage } : item))
+          prev.map((item) => (item.id === queueId ? { ...item, status: "Failed", error: err.friendlyMessage || err.message } : item))
         );
-        showToast(`Failed to process "${file.name}": ${err.friendlyMessage}`, "error");
+        showToast(`${t("ingestion.uploadFailed", "Failed to process")} "${file.name}": ${err.friendlyMessage || err.message}`, "error");
       }
     }
     setIsUploading(false);
+  };
+
+  const handleOpenInspect = (item) => {
+    if (item.metadata) {
+      setPreviewMetadata(item.metadata);
+      setPreviewFileName(item.name);
+      setPreviewModalOpen(true);
+    } else if (item.datasetId) {
+      inspectDataset(item.datasetId)
+        .then((data) => {
+          setPreviewMetadata(data);
+          setPreviewFileName(item.name);
+          setPreviewModalOpen(true);
+        })
+        .catch(() => {
+          showToast("Could not load dataset inspection metadata.", "error");
+        });
+    }
   };
 
   const handleDrag = (e) => {
@@ -149,7 +191,7 @@ function DataIngestion() {
   const triggerGenericUpload = () => {
     setSelectedSourceForUpload(null);
     if (fileInputRef.current) {
-      fileInputRef.current.accept = "*";
+      fileInputRef.current.accept = ALL_SUPPORTED_MIME;
       fileInputRef.current.click();
     }
   };
@@ -174,14 +216,24 @@ function DataIngestion() {
         </div>
       )}
 
+      {/* Inspection Modal */}
+      <IngestionPreviewModal
+        isOpen={previewModalOpen}
+        onClose={() => setPreviewModalOpen(false)}
+        metadata={previewMetadata}
+        fileName={previewFileName}
+      />
+
       <input type="file" ref={fileInputRef} onChange={(e) => handleUploadFiles(e.target.files, selectedSourceForUpload)} multiple className="hidden" />
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-2 border-b border-slate-200">
         <div>
-          <h1 className="text-xl font-bold text-slate-900 tracking-tight">Data Ingestion</h1>
+          <h1 className="text-xl font-bold text-slate-900 tracking-tight">
+            {t("ingestion.title", "Data Ingestion")}
+          </h1>
           <p className="text-xs text-slate-500 font-normal mt-0.5">
-            Upload real multi-source geospatial files directly to PostgreSQL/PostGIS.
+            {t("ingestion.subtitle", "Upload real multi-source geospatial files directly to PostgreSQL/PostGIS.")}
           </p>
         </div>
       </div>
@@ -200,50 +252,64 @@ function DataIngestion() {
           {isUploading ? <Loader2 size={20} className="animate-spin text-emerald-600" /> : <Upload size={20} />}
         </div>
 
-        <h2 className="text-sm font-bold text-slate-900">Upload Real Geospatial Land Records</h2>
-        <p className="text-xs text-slate-500 max-w-md mx-auto mt-1">
-          Select GeoJSON, Shapefile (.shp / .zip), GeoTIFF, GeoPackage (.gpkg), or CSV. Uploaded files are processed into PostGIS.
+        <h2 className="text-sm font-bold text-slate-900">
+          {t("ingestion.dragDropTitle", "Upload Multi-Format Geospatial Datasets")}
+        </h2>
+        <p className="text-xs text-slate-500 max-w-lg mx-auto mt-1">
+          {t("ingestion.dragDropDesc", "Drag & drop or browse: GeoJSON, Shapefile (.shp / .zip), KML, KMZ, GeoPackage (.gpkg), GPX, CSV, Excel (.xlsx / .xls), GeoTIFF, JPG or PNG.")}
         </p>
 
         <div className="mt-4 flex items-center justify-center gap-3">
           <button
             onClick={triggerGenericUpload}
             disabled={isUploading}
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#166534] hover:bg-emerald-900 text-white rounded-md text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#166534] hover:bg-emerald-900 text-white rounded-md text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50 shadow-sm"
           >
             <Upload size={14} />
-            {isUploading ? "Uploading..." : "Select Files"}
+            {isUploading ? t("common.loading", "Uploading...") : t("ingestion.selectFiles", "Select Files")}
           </button>
         </div>
 
         <span className="mt-3 block text-[11px] text-slate-400">
-          Max file size: 500 MB • Automatic UTM CRS Detection & PostGIS Processing
+          {t("ingestion.maxSizeNotice", "Max file size: 500 MB • Multi-format Parsers • UTM CRS Detection • Safe Extraction")}
         </span>
       </div>
 
-      {/* Queue */}
+      {/* Recent Ingestion Stream Queue */}
       {uploadQueue.length > 0 && (
-        <div className="bg-white rounded-lg border border-slate-200 p-5 space-y-3">
+        <div className="bg-white rounded-lg border border-slate-200 p-5 space-y-3 shadow-2xs">
           <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-            <h3 className="text-sm font-bold text-slate-900">Recent Ingestion Stream</h3>
-            <button onClick={() => setUploadQueue([])} className="text-xs text-red-600 hover:underline">Clear List</button>
+            <h3 className="text-sm font-bold text-slate-900">
+              {t("ingestion.recentStream", "Recent Ingestion Stream")}
+            </h3>
+            <button onClick={() => setUploadQueue([])} className="text-xs text-red-600 hover:underline">
+              {t("ingestion.clearList", "Clear List")}
+            </button>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs text-slate-600">
               <thead className="bg-slate-50 border-b border-slate-200 text-slate-700 font-semibold uppercase text-[10px] tracking-wider">
                 <tr>
-                  <th className="py-2.5 px-3">File Name</th>
-                  <th className="py-2.5 px-3">Source</th>
-                  <th className="py-2.5 px-3">Size</th>
-                  <th className="py-2.5 px-3">Detected CRS</th>
-                  <th className="py-2.5 px-3">Status</th>
+                  <th className="py-2.5 px-3">{t("ingestion.fileName", "File Name")}</th>
+                  <th className="py-2.5 px-3">{t("ingestion.source", "Source")}</th>
+                  <th className="py-2.5 px-3">{t("ingestion.size", "Size")}</th>
+                  <th className="py-2.5 px-3">{t("ingestion.detectedCrs", "Detected CRS")}</th>
+                  <th className="py-2.5 px-3">{t("ingestion.status", "Status")}</th>
+                  <th className="py-2.5 px-3 text-right">{t("common.actions", "Actions")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {uploadQueue.map((item) => (
                   <tr key={item.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="py-2.5 px-3 font-medium text-slate-900">{item.name}</td>
+                    <td className="py-2.5 px-3 font-medium text-slate-900 flex items-center gap-2">
+                      <span className="truncate max-w-[200px]">{item.name}</span>
+                      {item.format && (
+                        <span className="px-1.5 py-0.5 rounded text-[10px] bg-slate-100 font-mono text-slate-600">
+                          {item.format}
+                        </span>
+                      )}
+                    </td>
                     <td className="py-2.5 px-3">{item.source}</td>
                     <td className="py-2.5 px-3">{item.size}</td>
                     <td className="py-2.5 px-3 font-mono text-[11px]">{item.crs}</td>
@@ -256,6 +322,17 @@ function DataIngestion() {
                         {item.status}
                       </span>
                     </td>
+                    <td className="py-2.5 px-3 text-right">
+                      {item.status === "Completed" && (
+                        <button
+                          onClick={() => handleOpenInspect(item)}
+                          className="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-semibold text-slate-700 bg-white border border-slate-200 rounded hover:bg-slate-50 shadow-2xs transition-colors"
+                        >
+                          <Eye size={12} />
+                          {t("datasets.inspect", "Inspect")}
+                        </button>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -266,7 +343,9 @@ function DataIngestion() {
 
       {/* Categories */}
       <div className="space-y-3">
-        <h2 className="text-sm font-bold text-slate-900">Supported Ingestion Categories</h2>
+        <h2 className="text-sm font-bold text-slate-900">
+          {t("ingestion.categoriesTitle", "Supported Ingestion Categories")}
+        </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {dataSources.map((source) => {
             const Icon = source.icon;
@@ -277,15 +356,18 @@ function DataIngestion() {
                     <div className="w-8 h-8 rounded bg-emerald-50 text-[#166534] flex items-center justify-center">
                       <Icon size={16} />
                     </div>
+                    <span className="text-[10px] font-mono text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded">
+                      {source.formats.split(",")[0]}
+                    </span>
                   </div>
                   <h3 className="text-xs font-bold text-slate-900">{source.name}</h3>
                   <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-2 min-h-[30px]">{source.description}</p>
                 </div>
                 <button
                   onClick={() => triggerSourceUpload(source)}
-                  className="mt-3 w-full py-1.5 px-2 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded text-xs font-medium flex items-center justify-center gap-1"
+                  className="mt-3 w-full py-1.5 px-2 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded text-xs font-medium flex items-center justify-center gap-1 transition-colors cursor-pointer"
                 >
-                  <Upload size={12} /> Upload
+                  <Upload size={12} /> {t("ingestion.uploadBtn", "Upload")}
                 </button>
               </div>
             );

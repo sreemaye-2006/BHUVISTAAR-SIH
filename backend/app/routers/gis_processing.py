@@ -107,3 +107,19 @@ def process_dataset(
             status_code=500,
             detail=f"GIS processing failed: {str(error)}"
         )
+
+
+@router.post("/raster/{dataset_id}/process")
+def process_raster_compat(
+    dataset_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Compatibility endpoint for raster processing under /gis prefix."""
+    from app.routers.raster import process_raster, RasterProcessRequest
+    return process_raster(
+        dataset_id=dataset_id,
+        request=RasterProcessRequest(target_crs="EPSG:4326"),
+        db=db,
+        current_user=current_user
+    )

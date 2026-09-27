@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Calendar,
   CheckCircle2,
@@ -16,6 +17,7 @@ import { useAuth } from "../context/AuthContext";
 import { getProjectChangeDetections, detectVersionChanges } from "../api/changeDetection";
 
 function ChangeDetection() {
+  const { t } = useTranslation();
   const { selectedProjectId } = useAuth();
   const [activeCategory, setActiveCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -189,10 +191,10 @@ function ChangeDetection() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-2 border-b border-slate-200">
         <div>
           <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-            Temporal Change Detection
+            {t("changes.title")}
           </h1>
           <p className="text-xs text-slate-500 font-normal mt-0.5">
-            Bi-temporal spatial comparison ({meta.old_year} Baseline vs {meta.new_year} Drone Survey) to identify encroachments and unassessed construction.
+            {t("changes.subtitle")}
           </p>
         </div>
 
@@ -205,12 +207,12 @@ function ChangeDetection() {
             {isAnalyzing ? (
               <>
                 <RefreshCw size={14} className="animate-spin" />
-                Analyzing Temporal Layers...
+                {t("topology.validating", "Analyzing Temporal Layers...")}
               </>
             ) : (
               <>
                 <GitCompare size={14} />
-                Run Bi-Temporal Diff
+                {t("changes.runDetection", "Run Bi-Temporal Diff")}
               </>
             )}
           </button>
@@ -377,11 +379,11 @@ function ChangeDetection() {
         {isLoading ? (
           <div className="p-8 text-center bg-white border border-slate-200 rounded-lg text-slate-400 text-xs flex items-center justify-center gap-2">
             <RefreshCw size={16} className="animate-spin text-[#166534]" />
-            Loading real temporal change records...
+            {t("changes.loadingChanges", "Loading real temporal change records...")}
           </div>
         ) : filteredChanges.length === 0 ? (
           <div className="p-8 text-center bg-white border border-slate-200 rounded-lg text-slate-400 text-xs">
-            No temporal changes detected yet. Click "Run Bi-Temporal Diff" above to perform automated spatial comparison.
+            {t("changes.noChanges", "No temporal changes detected yet.")}
           </div>
         ) : (
           filteredChanges.map((item) => (

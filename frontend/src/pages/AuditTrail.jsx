@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Clock,
   ShieldCheck,
@@ -22,6 +23,7 @@ import { getAuditLogs } from "../api/audit";
 import { requestExport, downloadExportFile } from "../api/exports";
 
 function AuditTrail() {
+  const { t } = useTranslation();
   const { selectedProjectId } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedAction, setSelectedAction] = useState("all");
@@ -125,10 +127,10 @@ function AuditTrail() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-2 border-b border-slate-200">
         <div>
           <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-            Immutable Audit Trail & Event Ledger
+            {t('audit.title')}
           </h1>
           <p className="text-xs text-slate-500 font-normal mt-0.5">
-            Cryptographically sealed activity log of all spatial mutations, ingestion events, and officer adjudications.
+            {t('audit.subtitle')}
           </p>
         </div>
 
@@ -199,19 +201,19 @@ function AuditTrail() {
           <table className="w-full text-left text-xs text-slate-600">
             <thead className="bg-slate-50 border-b border-slate-200 text-slate-700 font-semibold uppercase text-[10px] tracking-wider">
               <tr>
-                <th className="py-2.5 px-3">Event ID & Time</th>
-                <th className="py-2.5 px-3">Actor</th>
-                <th className="py-2.5 px-3">Action & Target</th>
-                <th className="py-2.5 px-3">Mutation Details</th>
+                <th className="py-2.5 px-3">{t("audit.timestamp", "Event ID & Time")}</th>
+                <th className="py-2.5 px-3">{t("audit.user", "Actor")}</th>
+                <th className="py-2.5 px-3">{t("audit.action", "Action & Target")}</th>
+                <th className="py-2.5 px-3">{t("audit.description", "Mutation Details")}</th>
                 <th className="py-2.5 px-3">Cryptographic Hash</th>
-                <th className="py-2.5 px-3 text-right">Status</th>
+                <th className="py-2.5 px-3 text-right">{t("harmonization.status", "Status")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredEvents.length === 0 ? (
                 <tr>
                   <td colSpan="6" className="py-8 text-center text-slate-400 text-xs">
-                    No audit logs recorded yet. System activity and officer actions will appear here as you test.
+                    {t("audit.noLogs")}
                   </td>
                 </tr>
               ) : (

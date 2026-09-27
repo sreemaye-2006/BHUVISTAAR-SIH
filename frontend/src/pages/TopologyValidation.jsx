@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Layers,
   AlertTriangle,
@@ -26,6 +27,7 @@ import { validateTopology, getValidationResults } from "../api/topology";
 import { listProjectDatasets } from "../api/datasets";
 
 function TopologyValidation() {
+  const { t } = useTranslation();
   const { selectedProjectId } = useAuth();
   const [isRunningAudit, setIsRunningAudit] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -160,10 +162,10 @@ function TopologyValidation() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-2 border-b border-slate-200">
         <div>
           <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-            Topology Validation
+            {t("topology.title")}
           </h1>
           <p className="text-xs text-slate-500 font-normal mt-0.5">
-            Audit geospatial parcels against 5 core DoLR spatial topology rules.
+            {t("topology.subtitle")}
           </p>
         </div>
 
@@ -191,12 +193,12 @@ function TopologyValidation() {
             {isRunningAudit ? (
               <>
                 <Activity size={14} className="animate-spin" />
-                Auditing Geometries...
+                {t("topology.validating")}
               </>
             ) : (
               <>
                 <Play size={14} />
-                Run Topology Audit
+                {t("topology.runValidation")}
               </>
             )}
           </button>
@@ -357,19 +359,19 @@ function TopologyValidation() {
           <table className="w-full text-left text-xs text-slate-600">
             <thead className="bg-slate-50 border-b border-slate-200 text-slate-700 font-semibold uppercase text-[10px] tracking-wider">
               <tr>
-                <th className="py-2.5 px-3">Error ID / Parcels</th>
-                <th className="py-2.5 px-3">Rule Violated</th>
-                <th className="py-2.5 px-3">Discrepancy Details</th>
-                <th className="py-2.5 px-3">Severity</th>
-                <th className="py-2.5 px-3">Status</th>
-                <th className="py-2.5 px-3 text-right">Actions</th>
+                <th className="py-2.5 px-3">{t("topology.featureId")}</th>
+                <th className="py-2.5 px-3">{t("topology.errorType")}</th>
+                <th className="py-2.5 px-3">{t("topology.description")}</th>
+                <th className="py-2.5 px-3">{t("topology.severity")}</th>
+                <th className="py-2.5 px-3">{t("harmonization.status", "Status")}</th>
+                <th className="py-2.5 px-3 text-right">{t("topology.action")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredErrors.length === 0 ? (
                 <tr>
                   <td colSpan="6" className="py-8 text-center text-slate-400 text-xs">
-                    No topology errors found. Select a dataset and click "Run Topology Audit" to validate geometries.
+                    {t("topology.noErrors")}
                   </td>
                 </tr>
               ) : (

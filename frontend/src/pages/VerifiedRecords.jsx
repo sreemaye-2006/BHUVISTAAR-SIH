@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import {
   ShieldCheck,
   Search,
@@ -23,6 +24,7 @@ import { getHarmonizedFeatures } from "../api/harmonization";
 import { requestExport, downloadExportFile } from "../api/exports";
 
 function VerifiedRecords() {
+  const { t } = useTranslation();
   const { selectedProjectId } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedLandUse, setSelectedLandUse] = useState("all");
@@ -151,10 +153,10 @@ function VerifiedRecords() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-2 border-b border-slate-200">
         <div>
           <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-            Certified Land Records
+            {t("verified.title")}
           </h1>
           <p className="text-xs text-slate-500 font-normal mt-0.5">
-            Cryptographically sealed and ratified land titles ready for ULB integration and registry issuance.
+            {t("verified.subtitle")}
           </p>
         </div>
 
@@ -164,14 +166,14 @@ function VerifiedRecords() {
             className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-md text-xs font-semibold transition-colors cursor-pointer"
           >
             <Download size={13} />
-            Export GeoPackage
+            {t("verified.export", "Export")} GeoPackage
           </button>
           <button
             onClick={() => handleExport("csv")}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#166534] hover:bg-emerald-900 text-white rounded-md text-xs font-semibold transition-colors cursor-pointer"
           >
             <FileText size={13} />
-            Download Title Ledger
+            {t("verified.exportCSV", "Download Title Ledger")}
           </button>
         </div>
       </div>
@@ -246,7 +248,7 @@ function VerifiedRecords() {
               {filteredRecords.length === 0 ? (
                 <tr>
                   <td colSpan="7" className="py-8 text-center text-slate-400 text-xs">
-                    No certified land records found. Upload datasets and complete harmonization to generate certified records.
+                    {t("verified.noVerified")}
                   </td>
                 </tr>
               ) : (

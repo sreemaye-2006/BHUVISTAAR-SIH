@@ -53,9 +53,36 @@ def process_vector_dataset(
     # 3. Read vector dataset
     # --------------------------------------------------
 
-    gdf = gpd.read_file(dataset.file_path)
+    ext = os.path.splitext(dataset.file_path)[1].lower()
+    if ext in [".geojson", ".json"]:
+        gdf = gpd.read_file(dataset.file_path)
+    elif ext in [".csv", ".xlsx", ".xls"]:
+        from app.services.format_adapters.tabular_adapter import TabularAdapter
+        adapter = TabularAdapter()
+        gdf = adapter.to_geodataframe(dataset.file_path)
+        if gdf is None or gdf.empty:
+            # Attribute-only tabular dataset (no spatial coordinates)
+            version.processing_status = "completed"
+            version.processing_notes = (
+                "Ingested as attribute-only tabular dataset (no spatial coordinates)."
+            )
+            dataset.status = "processed"
+            dataset.dataset_type = "tabular"
+            db.commit()
+            return {
+                "status": "completed",
+                "dataset_id": dataset.id,
+                "version_id": version.id,
+                "message": "Ingested as attribute-only dataset.",
+                "original_feature_count": 0,
+                "stored_feature_count": 0,
+                "is_spatial": False
+            }
+    else:
+        from app.services.format_adapters import read_vector_data
+        gdf = read_vector_data(dataset.file_path)
 
-    if gdf.empty:
+    if gdf is None or gdf.empty:
         raise ValueError("Dataset contains no features")
 
     # --------------------------------------------------

@@ -11,6 +11,12 @@ ALLOWED_EXTENSIONS = {
     ".tif",
     ".tiff",
     ".csv",
+    ".xlsx",
+    ".xls",
+    ".gpx",
+    ".jpg",
+    ".jpeg",
+    ".png",
     ".zip"
 }
 
@@ -34,6 +40,12 @@ def get_file_type(filename: str) -> str:
         ".tif": "GeoTIFF",
         ".tiff": "GeoTIFF",
         ".csv": "CSV",
+        ".xlsx": "Excel",
+        ".xls": "Excel",
+        ".gpx": "GPX",
+        ".jpg": "Raster/Image",
+        ".jpeg": "Raster/Image",
+        ".png": "Raster/Image",
         ".zip": "ZIP"
     }
 

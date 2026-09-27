@@ -13,6 +13,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "../context/AuthContext";
 import { listProjectDatasets } from "../api/datasets";
 import { listConflicts } from "../api/conflicts";
@@ -20,6 +21,7 @@ import { getHarmonizedFeatures } from "../api/harmonization";
 import { getProjectMatches } from "../api/matching";
 
 function Dashboard() {
+  const { t } = useTranslation();
   const { selectedProjectId, projects } = useAuth();
   const [datasets, setDatasets] = useState([]);
   const [conflicts, setConflicts] = useState([]);
@@ -77,38 +79,37 @@ function Dashboard() {
   const safeDatasets = Array.isArray(datasets) ? datasets : [];
   const totalFeaturesIngested = safeDatasets.reduce((acc, ds) => acc + (ds.feature_count || 0), 0);
 
-
   const statistics = [
     {
-      title: "Total Ingested Datasets",
+      title: t("dashboard.totalDatasets", "Total Ingested Datasets"),
       value: datasets.length.toString(),
       change: `+${datasets.length}`,
       isPositive: true,
-      meta: `${totalFeaturesIngested} features stored`,
+      meta: `${totalFeaturesIngested} ${t("dashboard.featuresStored", "features stored")}`,
       icon: Database,
     },
     {
-      title: "Harmonized Records",
+      title: t("dashboard.harmonizedRecords", "Harmonized Records"),
       value: harmonizedCount.toString(),
       change: matchesCount > 0 ? `${Math.round((harmonizedCount / (matchesCount || 1)) * 100)}%` : "0%",
       isPositive: true,
-      meta: `${matchesCount} matched pairs`,
+      meta: `${matchesCount} ${t("dashboard.matchedPairs", "matched pairs")}`,
       icon: Layers,
     },
     {
-      title: "Active Conflicts",
+      title: t("dashboard.activeConflicts", "Active Conflicts"),
       value: pendingConflictsCount.toString(),
-      change: `${resolvedConflictsCount} resolved`,
+      change: `${resolvedConflictsCount} ${t("dashboard.resolved", "resolved")}`,
       isPositive: pendingConflictsCount === 0,
-      meta: `${conflicts.length} total conflicts`,
+      meta: `${conflicts.length} ${t("dashboard.totalConflicts", "total conflicts")}`,
       icon: AlertTriangle,
     },
     {
-      title: "Verified Records",
+      title: t("dashboard.verifiedRecords", "Verified Records"),
       value: harmonizedCount.toString(),
       change: "100%",
       isPositive: true,
-      meta: "PostGIS stored & validated",
+      meta: t("dashboard.postgisValidated", "PostGIS stored & validated"),
       icon: CheckCircle2,
     },
   ];
@@ -120,73 +121,75 @@ function Dashboard() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-              Dashboard Overview
+              {t("dashboard.title", "Dashboard Overview")}
             </h1>
             <span className="px-2 py-0.5 bg-slate-100 text-slate-700 border border-slate-200 rounded text-[11px] font-mono font-medium">
-              {activeProject ? activeProject.name : "Select Project"}
+              {activeProject ? activeProject.name : t("dashboard.selectProject", "Select Project")}
             </span>
             {loading && <Loader2 className="h-4 w-4 animate-spin text-emerald-600" />}
           </div>
           <p className="text-xs text-slate-500 font-normal mt-0.5">
-            Multi-source land record integration, spatial harmonization, and verification status.
+            {t("dashboard.subtitle", "Multi-source land record integration, spatial harmonization, and verification status.")}
           </p>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
           <button
             onClick={() => selectedProjectId && loadDashboardData(selectedProjectId)}
-            title="Refresh Data"
-            className="p-1.5 bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 rounded-md text-xs transition"
+            title={t("common.refresh", "Refresh Data")}
+            className="p-1.5 bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 rounded-md text-xs transition cursor-pointer"
           >
             <RefreshCw size={13} />
           </button>
           <Link
             to="/ingestion"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-md text-xs font-semibold transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-md text-xs font-semibold transition-colors shadow-2xs"
           >
             <Upload size={13} />
-            Import Data
+            {t("dashboard.importData", "Import Data")}
           </Link>
           <Link
             to="/map"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#166534] hover:bg-emerald-900 text-white rounded-md text-xs font-semibold transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#166534] hover:bg-emerald-900 text-white rounded-md text-xs font-semibold transition-colors shadow-sm"
           >
             <Map size={13} />
-            GIS Map Viewer
+            {t("dashboard.gisMapViewer", "GIS Map Viewer")}
           </Link>
         </div>
       </div>
 
       {/* Metadata Bar */}
-      <div className="bg-white rounded-lg border border-slate-200 p-3.5 shadow-xs">
+      <div className="bg-white rounded-lg border border-slate-200 p-3.5 shadow-2xs">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
           <div>
             <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block">
-              Active Project
+              {t("dashboard.activeProject", "Active Project")}
             </span>
             <strong className="text-slate-800 font-medium">
-              {activeProject ? activeProject.name : "None Selected"}
+              {activeProject ? activeProject.name : t("dashboard.noneSelected", "None Selected")}
             </strong>
           </div>
           <div>
             <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block">
-              Coordinate System
+              {t("dashboard.coordSystem", "Coordinate System")}
             </span>
             <strong className="font-mono text-[#166534] font-medium">EPSG:4326 (WGS 84 / Metric UTM)</strong>
           </div>
           <div>
             <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block">
-              Loaded Datasets
+              {t("dashboard.loadedDatasets", "Loaded Datasets")}
             </span>
-            <strong className="text-slate-800 font-medium">{datasets.length} Active Layer(s)</strong>
+            <strong className="text-slate-800 font-medium">
+              {datasets.length} {t("dashboard.activeLayers", "Active Layer(s)")}
+            </strong>
           </div>
           <div>
             <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block">
-              PostGIS Status
+              {t("dashboard.postgisStatus", "PostGIS Status")}
             </span>
             <span className="inline-flex items-center gap-1 text-emerald-700 font-semibold">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
-              Connected & Operational
+              {t("dashboard.connectedOperational", "Connected & Operational")}
             </span>
           </div>
         </div>
@@ -200,7 +203,7 @@ function Dashboard() {
           return (
             <div
               key={stat.title}
-              className="bg-white rounded-lg border border-slate-200 p-4 hover:border-slate-300 transition-colors shadow-xs"
+              className="bg-white rounded-lg border border-slate-200 p-4 hover:border-slate-300 transition-colors shadow-2xs"
             >
               <div className="flex items-center justify-between mb-2">
                 <div className="w-8 h-8 rounded-md bg-emerald-50 text-[#166534] flex items-center justify-center">
@@ -238,31 +241,31 @@ function Dashboard() {
       {/* Main Grid: Progress & Sources */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Harmonization Progress */}
-        <div className="bg-white rounded-lg border border-slate-200 p-5 space-y-4 shadow-xs">
+        <div className="bg-white rounded-lg border border-slate-200 p-5 space-y-4 shadow-2xs">
           <div className="flex items-center justify-between pb-3 border-b border-slate-100">
             <div>
               <h3 className="text-sm font-bold text-slate-900">
-                Harmonization Pipeline
+                {t("dashboard.harmonizationPipeline", "Harmonization Pipeline")}
               </h3>
               <p className="text-xs text-slate-500 mt-0.5">
-                Active multi-stage spatial convergence pipeline
+                {t("dashboard.harmonizationDesc", "Active multi stage spatial convergence pipeline")}
               </p>
             </div>
             <Link
               to="/harmonization"
               className="text-xs font-semibold text-[#166534] hover:underline"
             >
-              View Pipeline →
+              {t("dashboard.viewPipeline", "View Pipeline")} →
             </Link>
           </div>
 
           <div className="space-y-2">
             <div className="flex items-center justify-between text-xs">
               <span className="font-semibold text-slate-700">
-                Project Harmonization Status
+                {t("dashboard.harmonizationStatus", "Project Harmonization Status")}
               </span>
               <strong className="text-[#166534] font-bold">
-                {harmonizedCount} Harmonized Records
+                {harmonizedCount} {t("dashboard.harmonizedRecords", "Harmonized Records")}
               </strong>
             </div>
             <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
@@ -277,71 +280,71 @@ function Dashboard() {
             <div className="flex items-center justify-between p-2.5 bg-slate-50 border border-slate-200 rounded-md text-xs">
               <div className="flex items-center gap-2 text-slate-700">
                 <CheckCircle2 size={15} className="text-[#166534]" />
-                <span className="font-medium">Multi-Source Datasets Loaded</span>
+                <span className="font-medium">{t("dashboard.multiSourceLoaded", "Multi-Source Datasets Loaded")}</span>
               </div>
               <span className="px-2 py-0.5 bg-emerald-50 border border-emerald-200 text-[#166534] rounded font-semibold text-[10px]">
-                {datasets.length} Loaded
+                {datasets.length} {t("dashboard.loaded", "Loaded")}
               </span>
             </div>
 
             <div className="flex items-center justify-between p-2.5 bg-slate-50 border border-slate-200 rounded-md text-xs">
               <div className="flex items-center gap-2 text-slate-700">
                 <CheckCircle2 size={15} className="text-[#166534]" />
-                <span className="font-medium">CRS Auto-UTM Standardization</span>
+                <span className="font-medium">{t("dashboard.crsStandardization", "CRS Auto-UTM Standardization")}</span>
               </div>
               <span className="px-2 py-0.5 bg-emerald-50 border border-emerald-200 text-[#166534] rounded font-semibold text-[10px]">
-                Active (Metres)
+                {t("dashboard.activeMetres", "Active (Metres)")}
               </span>
             </div>
 
             <div className="flex items-center justify-between p-2.5 bg-slate-50 border border-slate-200 rounded-md text-xs">
               <div className="flex items-center gap-2 text-slate-700">
                 <CheckCircle2 size={15} className="text-[#166534]" />
-                <span className="font-medium">AI Spatial & Attribute Matching</span>
+                <span className="font-medium">{t("dashboard.aiMatching", "AI Spatial & Attribute Matching")}</span>
               </div>
               <span className="px-2 py-0.5 bg-emerald-50 border border-emerald-200 text-[#166534] rounded font-semibold text-[10px]">
-                {matchesCount} Matches Found
+                {matchesCount} {t("dashboard.matchesFound", "Matches Found")}
               </span>
             </div>
 
             <div className="flex items-center justify-between p-2.5 bg-blue-50/50 border border-blue-200 rounded-md text-xs">
               <div className="flex items-center gap-2 text-blue-900">
                 <Activity size={15} className="text-blue-600" />
-                <span className="font-semibold">Conflict Adjudication</span>
+                <span className="font-semibold">{t("dashboard.conflictAdjudication", "Conflict Adjudication")}</span>
               </div>
               <span className="px-2 py-0.5 bg-blue-100 text-blue-800 rounded font-semibold text-[10px]">
-                {pendingConflictsCount} Pending
+                {pendingConflictsCount} {t("dashboard.pending", "Pending")}
               </span>
             </div>
           </div>
         </div>
 
         {/* Data Sources */}
-        <div className="bg-white rounded-lg border border-slate-200 p-5 space-y-4 shadow-xs">
+        <div className="bg-white rounded-lg border border-slate-200 p-5 space-y-4 shadow-2xs">
           <div className="flex items-center justify-between pb-3 border-b border-slate-100">
             <div>
               <h3 className="text-sm font-bold text-slate-900">
-                Project Datasets
+                {t("dashboard.projectDatasets", "Project Datasets")}
               </h3>
               <p className="text-xs text-slate-500 mt-0.5">
-                Active multi-source land record inputs
+                {t("dashboard.projectDatasetsDesc", "Active multi source land record inputs")}
               </p>
             </div>
             <Link
               to="/datasets"
               className="text-xs font-semibold text-[#166534] hover:underline"
             >
-              Manage Datasets →
+              {t("dashboard.manageDatasets", "Manage Datasets")} →
             </Link>
           </div>
 
           <div className="space-y-2.5 max-h-[220px] overflow-y-auto">
             {datasets.length === 0 ? (
               <div className="p-6 text-center text-slate-400 text-xs border border-dashed border-slate-200 rounded-md">
-                No datasets uploaded yet for this project.
+                {t("dashboard.noDatasetsYet", "No datasets uploaded yet for this project.")}
                 <div className="mt-2">
                   <Link to="/ingestion" className="text-emerald-700 font-semibold hover:underline">
-                    Upload Dataset Now
+                    {t("dashboard.uploadNow", "Upload Dataset Now")}
                   </Link>
                 </div>
               </div>
@@ -362,12 +365,12 @@ function Dashboard() {
                         </span>
                       </div>
                       <span className="block text-[11px] text-slate-500 truncate">
-                        Source: {ds.source || "Uploaded File"} • Status: {ds.status}
+                        {t("ingestion.source", "Source")}: {ds.source || "Uploaded File"} • {t("common.status", "Status")}: {ds.status}
                       </span>
                     </div>
                   </div>
                   <span className="text-[10px] font-semibold text-[#166534] bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded flex-shrink-0">
-                    Active
+                    {t("common.active", "Active")}
                   </span>
                 </div>
               ))
@@ -377,44 +380,43 @@ function Dashboard() {
       </div>
 
       {/* Recent Conflicts */}
-      <div className="bg-white rounded-lg border border-slate-200 p-5 space-y-3 shadow-xs">
+      <div className="bg-white rounded-lg border border-slate-200 p-5 space-y-3 shadow-2xs">
         <div className="flex items-center justify-between pb-2 border-b border-slate-100">
           <div>
             <h3 className="text-sm font-bold text-slate-900">
-              Recent Conflicts Requiring Adjudication
+              {t("conflicts.recentTitle", "Recent Conflicts Requiring Adjudication")}
             </h3>
             <p className="text-xs text-slate-500 mt-0.5">
-              Spatial deviations and attribute mismatches detected across multi-source layers
+              {t("conflicts.recentSubtitle", "Spatial deviations and attribute mismatches detected across multi-source layers")}
             </p>
           </div>
           <Link
             to="/conflicts"
             className="text-xs font-semibold text-[#166534] hover:underline px-2.5 py-1 bg-emerald-50 rounded border border-emerald-200"
           >
-            View All ({safeConflicts.length})
+            {t("common.viewAll", "View All")} ({safeConflicts.length})
           </Link>
         </div>
 
         <div className="overflow-x-auto">
           {safeConflicts.length === 0 ? (
             <div className="p-6 text-center text-slate-400 text-xs">
-              No conflicts detected for the active project.
+              {t("conflicts.noConflicts", "No conflicts detected for the active project.")}
             </div>
           ) : (
             <table className="w-full text-left text-xs text-slate-600">
               <thead className="bg-slate-50 border-b border-slate-200 text-slate-700 font-semibold uppercase text-[10px] tracking-wider">
                 <tr>
-                  <th className="py-2.5 px-3">Conflict ID / Description</th>
-                  <th className="py-2.5 px-3">Conflict Type</th>
-                  <th className="py-2.5 px-3">Source vs Target Value</th>
-                  <th className="py-2.5 px-3">Confidence</th>
-                  <th className="py-2.5 px-3">Status</th>
-                  <th className="py-2.5 px-3 text-right">Action</th>
+                  <th className="py-2.5 px-3">{t("conflicts.idDesc", "Conflict ID / Description")}</th>
+                  <th className="py-2.5 px-3">{t("conflicts.type", "Conflict Type")}</th>
+                  <th className="py-2.5 px-3">{t("conflicts.sourceVsTarget", "Source vs Target Value")}</th>
+                  <th className="py-2.5 px-3">{t("conflicts.confidence", "Confidence")}</th>
+                  <th className="py-2.5 px-3">{t("common.status", "Status")}</th>
+                  <th className="py-2.5 px-3 text-right">{t("common.actions", "Action")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {safeConflicts.slice(0, 5).map((cnf) => (
-
                   <tr key={cnf.id} className="hover:bg-slate-50 transition-colors">
                     <td className="py-2.5 px-3">
                       <span className="font-mono font-bold text-slate-900 block">CNF-{cnf.id}</span>
@@ -440,12 +442,12 @@ function Dashboard() {
                       {cnf.resolution_status === 'pending' ? (
                         <Link
                           to="/conflicts"
-                          className="px-2.5 py-1 bg-[#166534] hover:bg-emerald-900 text-white rounded text-xs font-semibold inline-block"
+                          className="px-2.5 py-1 bg-[#166534] hover:bg-emerald-900 text-white rounded text-xs font-semibold inline-block cursor-pointer shadow-2xs"
                         >
-                          Adjudicate
+                          {t("conflicts.adjudicate", "Adjudicate")}
                         </Link>
                       ) : (
-                        <span className="text-[11px] text-slate-400 font-medium">Resolved</span>
+                        <span className="text-[11px] text-slate-400 font-medium">{t("conflicts.resolved", "Resolved")}</span>
                       )}
                     </td>
                   </tr>

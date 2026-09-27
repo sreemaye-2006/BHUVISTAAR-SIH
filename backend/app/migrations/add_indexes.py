@@ -117,20 +117,39 @@ def run_migrations():
             print(f"  - Note on confidence_score alter: {e}")
 
         # 2. Backfill missing columns for existing databases created before the latest schema revision.
-        missing_column_statements = [
-            "ALTER TABLE harmonized_features ADD COLUMN IF NOT EXISTS match_id INTEGER;",
-            "ALTER TABLE harmonized_features ADD COLUMN IF NOT EXISTS source_info TEXT;",
-            "ALTER TABLE conflicts ADD COLUMN IF NOT EXISTS severity VARCHAR(50) DEFAULT 'medium';",
-            "ALTER TABLE conflicts ADD COLUMN IF NOT EXISTS suggested_resolution TEXT;",
-            "ALTER TABLE projects ADD COLUMN IF NOT EXISTS settings TEXT DEFAULT '{}';",
-        ]
+        is_sqlite = conn.dialect.name == "sqlite"
+        if is_sqlite:
+            # Query existing columns for projects
+            proj_cols = [r[1] for r in conn.execute(text("PRAGMA table_info(projects)")).fetchall()]
+            if "settings" not in proj_cols:
+                conn.execute(text("ALTER TABLE projects ADD COLUMN settings TEXT DEFAULT '{}';"))
+                print("  - Added projects.settings column")
 
-        for stmt in missing_column_statements:
-            try:
-                conn.execute(text(stmt))
-                print(f"  - Applied migration: {stmt}")
-            except Exception as e:
-                print(f"  - Migration note: {e}")
+            conf_cols = [r[1] for r in conn.execute(text("PRAGMA table_info(conflicts)")).fetchall()]
+            if "severity" not in conf_cols:
+                conn.execute(text("ALTER TABLE conflicts ADD COLUMN severity VARCHAR(50) DEFAULT 'medium';"))
+            if "suggested_resolution" not in conf_cols:
+                conn.execute(text("ALTER TABLE conflicts ADD COLUMN suggested_resolution TEXT;"))
+
+            harm_cols = [r[1] for r in conn.execute(text("PRAGMA table_info(harmonized_features)")).fetchall()]
+            if "match_id" not in harm_cols:
+                conn.execute(text("ALTER TABLE harmonized_features ADD COLUMN match_id INTEGER;"))
+            if "source_info" not in harm_cols:
+                conn.execute(text("ALTER TABLE harmonized_features ADD COLUMN source_info TEXT;"))
+        else:
+            missing_column_statements = [
+                "ALTER TABLE harmonized_features ADD COLUMN IF NOT EXISTS match_id INTEGER;",
+                "ALTER TABLE harmonized_features ADD COLUMN IF NOT EXISTS source_info TEXT;",
+                "ALTER TABLE conflicts ADD COLUMN IF NOT EXISTS severity VARCHAR(50) DEFAULT 'medium';",
+                "ALTER TABLE conflicts ADD COLUMN IF NOT EXISTS suggested_resolution TEXT;",
+                "ALTER TABLE projects ADD COLUMN IF NOT EXISTS settings TEXT DEFAULT '{}';",
+            ]
+            for stmt in missing_column_statements:
+                try:
+                    conn.execute(text(stmt))
+                    print(f"  - Applied migration: {stmt}")
+                except Exception as e:
+                    print(f"  - Migration note: {e}")
 
         # 3. Consolidate legacy duplicate conflicts safely
         consolidate_duplicate_conflicts(conn)

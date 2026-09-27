@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import {
   AlertTriangle,
   Search,
@@ -21,6 +22,7 @@ import { useAuth } from "../context/AuthContext";
 import { listConflicts, detectConflicts, resolveConflict } from "../api/conflicts";
 
 function Conflicts() {
+  const { t } = useTranslation();
   const { selectedProjectId } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedType, setSelectedType] = useState("all");
@@ -210,10 +212,10 @@ function Conflicts() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-2 border-b border-slate-200">
         <div>
           <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-            Conflict Resolution Center
+            {t('conflicts.title')}
           </h1>
           <p className="text-xs text-slate-500 font-normal mt-0.5">
-            Review spatial, coordinate, and attribute discrepancies flagged across multi-source datasets.
+            {t('conflicts.subtitle')}
           </p>
         </div>
 
@@ -354,13 +356,13 @@ function Conflicts() {
             <table className="w-full text-left text-xs text-slate-600">
               <thead className="bg-slate-50 border-b border-slate-200 text-slate-700 font-semibold uppercase text-[10px] tracking-wider">
                 <tr>
-                  <th className="py-2.5 px-3">Conflict ID / Feature</th>
-                  <th className="py-2.5 px-3">Type & Description</th>
-                  <th className="py-2.5 px-3">Values (Source ⟷ Target)</th>
-                  <th className="py-2.5 px-3">Severity</th>
-                  <th className="py-2.5 px-3">Confidence</th>
-                  <th className="py-2.5 px-3">Status</th>
-                  <th className="py-2.5 px-3 text-right">Actions</th>
+                  <th className="py-2.5 px-3">{t("conflicts.idDesc", "Conflict ID / Feature")}</th>
+                  <th className="py-2.5 px-3">{t("conflicts.type", "Type & Description")}</th>
+                  <th className="py-2.5 px-3">{t("conflicts.sourceVsTarget", "Values (Source ⟷ Target)")}</th>
+                  <th className="py-2.5 px-3">{t("conflicts.severity", "Severity")}</th>
+                  <th className="py-2.5 px-3">{t("conflicts.confidence", "Confidence")}</th>
+                  <th className="py-2.5 px-3">{t("conflicts.resolution", "Status")}</th>
+                  <th className="py-2.5 px-3 text-right">{t("topology.action", "Actions")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -368,7 +370,7 @@ function Conflicts() {
                   <tr>
                     <td colSpan="7" className="py-8 text-center text-slate-400 text-xs">
                       {conflicts.length === 0
-                        ? "No conflicts found in the database. Run feature matching and conflict detection to test."
+                        ? t("conflicts.noConflicts", "No conflicts found in the database. Run feature matching and conflict detection to test.")
                         : "No conflicts match the selected search or filter criteria."}
                     </td>
                   </tr>

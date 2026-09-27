@@ -36,6 +36,14 @@ def reproject_raster(
         raise FileNotFoundError(f"Input raster not found: {input_path}")
 
     with rasterio.open(input_path) as src:
+        if not src.crs:
+            return {
+                "status": "georeferencing_required",
+                "message": "Raster/image does not contain CRS or georeferencing metadata. GCP georeferencing is required before reprojection.",
+                "is_georeferenced": False,
+                "input_path": input_path
+            }
+
         dst_crs = CRS.from_user_input(target_crs)
 
         transform, width, height = calculate_default_transform(

@@ -1,16 +1,52 @@
+# Virtual environments
 .venv/
+venv/
+env/
+
+# Byte-compiled / optimized / DLL files
 __pycache__/
-*.pyc
-node_modules/
-.env
-.env.*
-.DS_Store
+*.py[cod]
+*$py.class
+
+# Testing & Type checking caches
 .pytest_cache/
-.mypy_cache/
-.vscode/
-coverage/
 backend/.pytest_cache/
-backend/uploads/
-backend/exports/
+.mypy_cache/
+coverage/
+.coverage
+
+# Dependencies
+node_modules/
 frontend/node_modules/
 
+# Production builds
+dist/
+frontend/dist/
+dist-ssr/
+
+# Environment configurations and secrets
+.env
+.env.*
+*.env
+
+# Local uploads, exports, processed outputs
+uploads/
+backend/uploads/
+exports/
+backend/exports/
+processed/
+backend/processed/
+*.aux.xml
+
+# Temporary and scratch testing scripts
+scratch/
+backend/test_api.py
+backend/test_csv.py
+backend/test_upload.py
+backend/check_password.py
+
+# OS & IDE metadata
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

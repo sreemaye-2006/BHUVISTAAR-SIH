@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Settings as SettingsIcon,
   ShieldCheck,
@@ -17,6 +18,7 @@ import { useAuth } from "../context/AuthContext";
 import { getSettings, updateSettings } from "../api/settings";
 
 function Settings() {
+  const { t } = useTranslation();
   const { selectedProjectId, projects } = useAuth();
   const [crsDefault, setCrsDefault] = useState("EPSG:4326");
   const [activeZone, setActiveZone] = useState("EPSG:32643");
@@ -119,12 +121,12 @@ function Settings() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-              System Configuration & Parameters
+              {t('settings.title')}
             </h1>
             {loading && <Loader2 className="h-4 w-4 animate-spin text-emerald-600" />}
           </div>
           <p className="text-xs text-slate-500 font-normal mt-0.5">
-            Configure spatial reference systems, Geo-AI harmonization thresholds, and administrative security parameters for {activeProject?.name ? `Project: ${activeProject.name}` : "selected project"}.
+            {t('settings.subtitle')}
           </p>
         </div>
 
@@ -135,7 +137,7 @@ function Settings() {
             className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#166534] hover:bg-emerald-900 text-white rounded-md text-xs font-semibold transition-colors cursor-pointer self-start disabled:opacity-50"
           >
             {saving ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
-            Save Configuration
+            {t('settings.save')}
           </button>
           <button
             onClick={loadSettings}
@@ -211,7 +213,7 @@ function Settings() {
         <div className="bg-white rounded-lg border border-slate-200 p-5 shadow-xs space-y-4">
           <div className="flex items-center gap-2 pb-2 border-b border-slate-100 text-xs font-bold text-slate-900">
             <Globe2 size={16} className="text-[#166534]" />
-            <span>Coordinate Reference System (CRS) Standards</span>
+            <span>{t("settings.crsSection", "Coordinate Reference System (CRS) Standards")}</span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
@@ -256,7 +258,7 @@ function Settings() {
         <div className="bg-white rounded-lg border border-slate-200 p-5 shadow-xs space-y-4">
           <div className="flex items-center gap-2 pb-2 border-b border-slate-100 text-xs font-bold text-slate-900">
             <Sliders size={16} className="text-[#166534]" />
-            <span>Spatial Matching & Reconciliation Thresholds</span>
+            <span>{t("settings.pipelineSection", "Spatial Matching & Reconciliation Thresholds")}</span>
           </div>
 
           <div className="space-y-4 text-xs">
@@ -264,7 +266,7 @@ function Settings() {
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label className="text-[11px] font-semibold text-slate-700">
-                  Minimum Polygon IoU Overlap Conformance
+                  {t("settings.iouThreshold", "Minimum Polygon IoU Overlap Conformance")}
                 </label>
                 <span className="font-mono font-bold text-[#166534] bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 text-xs">
                   {iouThreshold}%
@@ -287,7 +289,7 @@ function Settings() {
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label className="text-[11px] font-semibold text-slate-700">
-                  Vertex Snapping Tolerance Buffer
+                  {t("settings.bufferDistance", "Vertex Snapping Tolerance Buffer")}
                 </label>
                 <span className="font-mono font-bold text-[#166534] bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 text-xs">
                   {bufferDistance} meters

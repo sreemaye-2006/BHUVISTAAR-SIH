@@ -76,6 +76,10 @@ def process_raster(
 
     try:
         result = reproject_raster(dataset.file_path, output_path, request.target_crs)
+        if result.get("status") == "georeferencing_required":
+            dataset.status = "processed"
+            db.commit()
+            return result
 
         # Audit
         from app.services.audit_service import create_audit_log

@@ -121,3 +121,26 @@ async def upload_dataset_file(
         "file_size_mb": round(total_bytes / (1024 * 1024), 2),
         "status": dataset.status
     }
+
+
+@router.get("/{dataset_id}/inspect")
+def inspect_uploaded_dataset(
+    dataset_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Inspect metadata, CRS, geometry, feature count, and columns of an uploaded dataset."""
+    dataset = db.query(Dataset).filter(Dataset.id == dataset_id).first()
+    if not dataset:
+        raise HTTPException(status_code=404, detail="Dataset not found")
+    project = db.query(Project).filter(Project.id == dataset.project_id).first()
+    if not project or project.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    if not dataset.file_path or not os.path.exists(dataset.file_path):
+        raise HTTPException(status_code=400, detail="No uploaded file found for this dataset")
+
+    from app.services.format_adapters import inspect_file
+    try:
+        return inspect_file(dataset.file_path)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Inspection failed: {str(e)}")

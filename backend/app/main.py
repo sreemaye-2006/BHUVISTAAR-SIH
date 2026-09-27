@@ -66,8 +66,15 @@ from app.routers.settings import router as settings_router
 from app.routers.reports import router as reports_router
 
 # Ensure schema matches the current model set and backfill any legacy/missing columns.
-run_migrations()
-Base.metadata.create_all(bind=engine)
+try:
+    run_migrations()
+except Exception as e:
+    print(f"Migration note: {e}")
+
+try:
+    Base.metadata.create_all(bind=engine)
+except Exception as e:
+    print(f"Database schema initialization note: {e}")
 
 
 # Create FastAPI application
@@ -81,7 +88,15 @@ app = FastAPI(
 # CORS configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+    ],
+    allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1)(:[0-9]+)?$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

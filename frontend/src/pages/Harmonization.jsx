@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Layers,
   Play,
@@ -28,6 +29,7 @@ import { startPipeline, getPipelineStatus } from "../api/pipeline";
 import { getProjectMatches } from "../api/matching";
 
 function Harmonization() {
+  const { t } = useTranslation();
   const { selectedProjectId } = useAuth();
   const [pipelineState, setPipelineState] = useState("idle");
   const [currentStep, setCurrentStep] = useState(0);
@@ -409,10 +411,10 @@ function Harmonization() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-2 border-b border-slate-200">
         <div>
           <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-            Harmonization Pipeline
+            {t('harmonization.title')}
           </h1>
           <p className="text-xs text-slate-500 font-normal mt-0.5">
-            Automated spatial polygon matching, attribute alignment, and conflict classification.
+            {t('harmonization.subtitle')}
           </p>
         </div>
 
@@ -424,12 +426,12 @@ function Harmonization() {
           {pipelineState === "running" ? (
             <>
               <Activity size={14} className="animate-spin" />
-              Running Step {currentStep}/8...
+              {t('harmonization.step')} {currentStep}/8...
             </>
           ) : (
             <>
               <Play size={14} />
-              Run Pipeline
+              {t('harmonization.runPipeline')}
             </>
           )}
         </button>
@@ -453,7 +455,7 @@ function Harmonization() {
       {loading && (
         <div className="flex items-center justify-center gap-2 py-8 text-slate-500 text-sm">
           <Loader2 size={18} className="animate-spin" />
-          Loading harmonization data...
+          {t('harmonization.loadingData')}
         </div>
       )}
 
@@ -464,17 +466,17 @@ function Harmonization() {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
               <div>
                 <span className="text-[10px] text-slate-400 font-semibold uppercase block">
-                  Primary Layer
+                  {t('harmonization.primaryLayer')}
                 </span>
                 <strong className="text-slate-900 font-medium">
                   {sourceDataset
                     ? `${sourceDataset.name} (${totalMatches} records)`
-                    : "No dataset selected"}
+                    : t('harmonization.noDataset')}
                 </strong>
               </div>
               <div>
                 <span className="text-[10px] text-slate-400 font-semibold uppercase block">
-                  Target CRS
+                  {t('harmonization.targetCrs')}
                 </span>
                 <strong className="font-mono text-[#166534]">
                   {sourceDataset?.crs || "EPSG:4326 (WGS 84)"}
@@ -482,7 +484,7 @@ function Harmonization() {
               </div>
               <div>
                 <span className="text-[10px] text-slate-400 font-semibold uppercase block">
-                  Matching Threshold
+                  {t('harmonization.matchingThreshold')}
                 </span>
                 <strong className="text-slate-900 font-medium">
                   IoU ≥ 85% (Buffer 2.5m)
@@ -490,7 +492,7 @@ function Harmonization() {
               </div>
               <div>
                 <span className="text-[10px] text-slate-400 font-semibold uppercase block">
-                  Pipeline Status
+                  {t('harmonization.pipelineStatus')}
                 </span>
                 <strong
                   className={`font-semibold ${
@@ -512,10 +514,10 @@ function Harmonization() {
           {/* 8-Step Stepper */}
           <div className="bg-white rounded-lg border border-slate-200 p-4 space-y-3">
             <div className="flex items-center justify-between text-xs font-semibold text-slate-800">
-              <span>Workflow Stages</span>
+              <span>{t('harmonization.workflowStages')}</span>
               <span className="text-[#166534] font-medium">
                 {pipelineState === "running"
-                  ? `Running Step ${currentStep} of 8...`
+                  ? `${t('harmonization.step')} ${currentStep} ${t('harmonization.of')} 8...`
                   : currentPipelineStatusLabel}
               </span>
             </div>
@@ -552,14 +554,14 @@ function Harmonization() {
           {/* Results KPIs */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="bg-white rounded-lg border border-slate-200 p-3">
-              <span className="text-[11px] text-slate-500 block">Total Matches</span>
+              <span className="text-[11px] text-slate-500 block">{t('harmonization.totalMatches')}</span>
               <strong className="text-xl font-bold text-slate-900">
                 {totalMatches}
               </strong>
             </div>
             <div className="bg-white rounded-lg border border-emerald-200 bg-emerald-50/30 p-3">
               <span className="text-[11px] text-emerald-800 font-medium block">
-                High Confidence (≥85%)
+                {t('harmonization.highConfidence')}
               </span>
               <strong className="text-xl font-bold text-[#166534]">
                 {highConfMatches}
@@ -570,7 +572,7 @@ function Harmonization() {
             </div>
             <div className="bg-white rounded-lg border border-amber-200 bg-amber-50/30 p-3">
               <span className="text-[11px] text-amber-800 font-medium block">
-                Flagged Conflicts
+                {t('harmonization.flaggedConflicts')}
               </span>
               <strong className="text-xl font-bold text-amber-800">
                 {flaggedConflicts}
@@ -581,7 +583,7 @@ function Harmonization() {
             </div>
             <div className="bg-white rounded-lg border border-slate-200 p-3">
               <span className="text-[11px] text-slate-500 block">
-                Avg Confidence
+                {t('harmonization.pendingReview')}
               </span>
               <strong className="text-xl font-bold text-slate-900">
                 {totalMatches > 0 ? `${avgConfidence.toFixed(1)}%` : "—"}
@@ -601,7 +603,7 @@ function Harmonization() {
                       : "text-slate-500 hover:text-slate-800"
                   }`}
                 >
-                  Matched Features ({filteredMatches.length})
+                  {t('harmonization.tabMatches')} ({filteredMatches.length})
                 </button>
                 <button
                   onClick={() => setActiveTab("attributes")}
@@ -611,7 +613,7 @@ function Harmonization() {
                       : "text-slate-500 hover:text-slate-800"
                   }`}
                 >
-                  Attribute Mapping Matrix ({attributeMappingRows.length})
+                  {t('harmonization.tabMappings')} ({attributeMappingRows.length})
                 </button>
               </div>
 
@@ -621,10 +623,10 @@ function Harmonization() {
                   onChange={(e) => setFilterConfidence(e.target.value)}
                   className="bg-slate-50 border border-slate-200 rounded px-2 py-1 text-xs text-slate-700 cursor-pointer"
                 >
-                  <option value="all">All Parcels</option>
-                  <option value="conflicts">Flagged Conflicts</option>
-                  <option value="pending">Pending Review</option>
-                  <option value="accepted">Accepted</option>
+                  <option value="all">{t('harmonization.tabMatches')}</option>
+                  <option value="conflicts">{t('harmonization.flaggedConflicts')}</option>
+                  <option value="pending">{t('harmonization.pendingReview')}</option>
+                  <option value="accepted">{t('harmonization.approved')}</option>
                 </select>
               )}
             </div>
@@ -723,7 +725,7 @@ function Harmonization() {
                             }
                             className="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-[#166534] border border-emerald-200 rounded text-xs font-semibold transition-colors cursor-pointer"
                           >
-                            Accept
+                            {t('harmonization.approve')}
                           </button>
                           <button
                             onClick={() =>
@@ -731,7 +733,7 @@ function Harmonization() {
                             }
                             className="px-2.5 py-1 bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 rounded text-xs font-medium transition-colors cursor-pointer"
                           >
-                            Reject
+                            {t('harmonization.reject')}
                           </button>
                         </div>
                       </div>
@@ -796,7 +798,7 @@ function Harmonization() {
                                   }
                                   className="px-2 py-0.5 bg-emerald-50 hover:bg-emerald-100 text-[#166534] border border-emerald-200 rounded text-[11px] font-semibold transition-colors cursor-pointer"
                                 >
-                                  Approve
+                                  {t('harmonization.approve')}
                                 </button>
                                 <button
                                   onClick={() =>
@@ -804,7 +806,7 @@ function Harmonization() {
                                   }
                                   className="px-2 py-0.5 bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 rounded text-[11px] font-medium transition-colors cursor-pointer"
                                 >
-                                  Reject
+                                  {t('harmonization.reject')}
                                 </button>
                               </div>
                             )}

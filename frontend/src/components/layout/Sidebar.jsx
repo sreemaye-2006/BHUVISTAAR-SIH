@@ -1,4 +1,5 @@
 import { NavLink } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   LayoutDashboard,
   Database,
@@ -16,53 +17,55 @@ import {
 } from "lucide-react";
 
 function Sidebar() {
+  const { t } = useTranslation();
+
   const navigation = [
     {
-      group: "Overview",
+      group: t("nav.groups.overview"),
       items: [
-        { name: "Dashboard", href: "/", icon: LayoutDashboard },
+        { name: t("nav.dashboard"), href: "/", icon: LayoutDashboard },
       ],
     },
     {
-      group: "Data Ingestion",
+      group: t("nav.groups.dataIngestion"),
       items: [
-        { name: "Import Datasets", href: "/ingestion", icon: Upload },
-        { name: "Dataset Repository", href: "/datasets", icon: Database },
+        { name: t("nav.ingestion"), href: "/ingestion", icon: Upload },
+        { name: t("nav.datasets"), href: "/datasets", icon: Database },
       ],
     },
     {
-      group: "Processing",
+      group: t("nav.groups.processing"),
       items: [
-        { name: "Harmonization", href: "/harmonization", icon: Layers },
-        { name: "Topology Validation", href: "/topology", icon: Shapes },
+        { name: t("nav.harmonization"), href: "/harmonization", icon: Layers },
+        { name: t("nav.topology"), href: "/topology", icon: Shapes },
       ],
     },
     {
-      group: "Spatial Analysis",
+      group: t("nav.groups.spatialAnalysis"),
       items: [
-        { name: "GIS Map Viewer", href: "/map", icon: Map },
-        { name: "Conflict Center", href: "/conflicts", icon: AlertTriangle },
-        { name: "Change Detection", href: "/changes", icon: TrendingUp },
+        { name: t("nav.map"), href: "/map", icon: Map },
+        { name: t("nav.conflicts"), href: "/conflicts", icon: AlertTriangle },
+        { name: t("nav.changes"), href: "/changes", icon: TrendingUp },
       ],
     },
     {
-      group: "Verification",
+      group: t("nav.groups.verification"),
       items: [
-        { name: "Pending Review", href: "/review", icon: CheckSquare },
-        { name: "Verified Records", href: "/verified", icon: FileCheck },
+        { name: t("nav.review"), href: "/review", icon: CheckSquare },
+        { name: t("nav.verified"), href: "/verified", icon: FileCheck },
       ],
     },
     {
-      group: "Reports & Audit",
+      group: t("nav.groups.reportsAudit"),
       items: [
-        { name: "Summary Reports", href: "/reports", icon: FileText },
-        { name: "Audit Trail", href: "/audit", icon: Clock },
+        { name: t("nav.reports"), href: "/reports", icon: FileText },
+        { name: t("nav.audit"), href: "/audit", icon: Clock },
       ],
     },
     {
-      group: "System",
+      group: t("nav.groups.system"),
       items: [
-        { name: "Settings", href: "/settings", icon: Settings },
+        { name: t("nav.settings"), href: "/settings", icon: Settings },
       ],
     },
   ];
@@ -123,10 +126,10 @@ function Sidebar() {
           <span className="w-2 h-2 rounded-full bg-emerald-600"></span>
           <div className="min-w-0">
             <span className="text-[11px] font-semibold text-slate-800 block leading-tight">
-              Node Operational
+              {t("common.nodeStatus")}
             </span>
             <span className="text-[10px] text-slate-500 font-normal truncate block">
-              SIH26013 • Urban Ward 17
+              {t("common.nodeSubtext")}
             </span>
           </div>
         </div>

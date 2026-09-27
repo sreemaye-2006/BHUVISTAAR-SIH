@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import {
   FileText,
   Download,
@@ -27,6 +28,7 @@ import { getProjectSummary } from "../api/reports";
 
 
 function Reports() {
+  const { t } = useTranslation();
   const { selectedProjectId, projects } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -161,12 +163,12 @@ function Reports() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-              Summary Reports & Executive Dossiers
+              {t("reports.title")}
             </h1>
             {loading && <Loader2 className="h-4 w-4 animate-spin text-emerald-600" />}
           </div>
           <p className="text-xs text-slate-500 font-normal mt-0.5">
-            Download comprehensive analytical reports, topology compliance audits, and legal title registers for {activeProject?.name ? `Project: ${activeProject.name}` : "selected project"}.
+            {t("reports.subtitle")}
           </p>
         </div>
 
@@ -220,16 +222,15 @@ function Reports() {
         </div>
       </div>
 
-      {/* Reports Grid */}
       {loading && reportsList.length === 0 ? (
         <div className="bg-white rounded-lg border border-slate-200 p-12 text-center text-slate-500">
           <Loader2 className="h-6 w-6 animate-spin text-emerald-600 mx-auto mb-2" />
-          <p className="text-xs font-medium">Computing live project reports from PostgreSQL...</p>
+          <p className="text-xs font-medium">{t("reports.loadingReport", "Computing live project reports from PostgreSQL...")}</p>
         </div>
       ) : filteredReports.length === 0 ? (
         <div className="bg-white rounded-lg border border-slate-200 p-12 text-center text-slate-400">
           <FileText className="h-8 w-8 mx-auto mb-2 text-slate-300" />
-          <p className="text-xs font-medium text-slate-600">No reports found for this query.</p>
+          <p className="text-xs font-medium text-slate-600">{t("reports.noData")}</p>
           <p className="text-[11px] text-slate-400 mt-1">Upload datasets and execute matching to generate project reports.</p>
         </div>
       ) : (

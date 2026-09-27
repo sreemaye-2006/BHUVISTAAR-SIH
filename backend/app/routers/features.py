@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 
 from app.database import get_db
+from app.models.spatial_feature import SpatialFeature
 from app.models.dataset_version import DatasetVersion
 from app.models.dataset import Dataset
 from app.models.project import Project
@@ -76,53 +77,88 @@ def get_dataset_features(
             "features": []
         }
 
-    # Retrieve features and convert geometry to GeoJSON
-    query = text("""
-        SELECT
-            id,
-            feature_type,
-            feature_code,
-            properties,
-            ST_AsGeoJSON(geometry) AS geometry,
-            confidence_score
-        FROM spatial_features
-        WHERE dataset_version_id = :version_id
-        ORDER BY id
-    """)
-
-    rows = db.execute(
-        query,
-        {"version_id": version.id}
-    ).fetchall()
-
     features = []
+    is_sqlite = db.bind.dialect.name == "sqlite"
 
-    for row in rows:
-        geometry = row.geometry
-        if isinstance(geometry, str):
-            try:
-                geometry = json.loads(geometry)
-            except (TypeError, ValueError):
-                geometry = None
+    if is_sqlite:
+        from geoalchemy2.shape import to_shape
+        from shapely.geometry import mapping
+        records = (
+            db.query(SpatialFeature)
+            .filter(SpatialFeature.dataset_version_id == version.id)
+            .order_by(SpatialFeature.id)
+            .all()
+        )
+        for rec in records:
+            geom = None
+            if rec.geometry is not None:
+                try:
+                    geom = mapping(to_shape(rec.geometry))
+                except Exception:
+                    geom = None
+            props = rec.properties or {}
+            if isinstance(props, str):
+                try:
+                    props = json.loads(props)
+                except Exception:
+                    props = {}
+            features.append({
+                "type": "Feature",
+                "id": rec.id,
+                "properties": {
+                    **(props if isinstance(props, dict) else {}),
+                    "feature_type": rec.feature_type,
+                    "feature_code": rec.feature_code,
+                    "confidence_score": rec.confidence_score,
+                },
+                "geometry": geom,
+            })
+    else:
+        # PostGIS query
+        query = text("""
+            SELECT
+                id,
+                feature_type,
+                feature_code,
+                properties,
+                ST_AsGeoJSON(geometry) AS geometry,
+                confidence_score
+            FROM spatial_features
+            WHERE dataset_version_id = :version_id
+            ORDER BY id
+        """)
 
-        properties = row.properties or {}
-        if isinstance(properties, str):
-            try:
-                properties = json.loads(properties)
-            except (TypeError, ValueError):
-                properties = {}
+        rows = db.execute(
+            query,
+            {"version_id": version.id}
+        ).fetchall()
 
-        features.append({
-            "type": "Feature",
-            "id": row.id,
-            "properties": {
-                **(properties if isinstance(properties, dict) else {}),
-                "feature_type": row.feature_type,
-                "feature_code": row.feature_code,
-                "confidence_score": row.confidence_score,
-            },
-            "geometry": geometry,
-        })
+        for row in rows:
+            geometry = row.geometry
+            if isinstance(geometry, str):
+                try:
+                    geometry = json.loads(geometry)
+                except (TypeError, ValueError):
+                    geometry = None
+
+            properties = row.properties or {}
+            if isinstance(properties, str):
+                try:
+                    properties = json.loads(properties)
+                except (TypeError, ValueError):
+                    properties = {}
+
+            features.append({
+                "type": "Feature",
+                "id": row.id,
+                "properties": {
+                    **(properties if isinstance(properties, dict) else {}),
+                    "feature_type": row.feature_type,
+                    "feature_code": row.feature_code,
+                    "confidence_score": row.confidence_score,
+                },
+                "geometry": geometry,
+            })
 
     return {
         "type": "FeatureCollection",
